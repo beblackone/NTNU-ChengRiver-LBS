@@ -9,3 +9,11 @@ export interface ArchiveItem {
   title: string;
   content: string;
 }
+
+export interface Station {
+  id: number;
+  title: string;
+  description: string;
+  url: string;
+  coordinates: string;
+}

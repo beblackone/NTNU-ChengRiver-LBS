@@ -1,40 +1,109 @@
-import React from 'react';
-import { Smartphone, ArrowRight, Aperture } from 'lucide-react';
+import React, { useState } from 'react';
+import { Smartphone, ExternalLink, CheckCircle, Lock, ChevronDown, MapPin } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Station } from '../types';
 
-const ARCard: React.FC = () => {
+interface ARCardProps {
+  station: Station;
+  isVisited: boolean;
+  isUnlocked: boolean;
+  onVisit: () => void;
+}
+
+const ARCard: React.FC<ARCardProps> = ({ station, isVisited, isUnlocked, onVisit }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleAction = () => {
+    if (!isVisited) onVisit();
+  };
+
+  const toggleOpen = () => {
+    setIsOpen(!isOpen);
+  };
+
   return (
-    <div className="relative group overflow-hidden rounded-xl border border-cyan-500/50 bg-slate-800/50 backdrop-blur-md shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-      {/* Background Gradient Pulse */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 group-hover:opacity-100 transition-opacity duration-500" />
-      
-      <div className="relative p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div className="bg-cyan-500/20 p-3 rounded-lg border border-cyan-500/30">
-            <Aperture className="w-8 h-8 text-cyan-400 animate-spin-slow" />
+    <div className={`relative group rounded-xl border transition-all duration-500
+      ${isVisited 
+        ? 'border-emerald-500/50 bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
+        : isUnlocked
+          ? isOpen 
+            ? 'border-cyan-500/50 bg-slate-800/80 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
+            : 'border-slate-700 bg-slate-900/50 hover:border-cyan-500/30'
+          : 'border-slate-800 bg-slate-900/30 opacity-70 grayscale'
+      }`}
+    >
+      {/* Header (Always Visible) - Acts as the Trigger */}
+      <button 
+        onClick={toggleOpen}
+        className="w-full text-left p-4 flex items-center justify-between outline-none"
+      >
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className={`text-[10px] font-mono font-bold uppercase border px-1.5 py-0.5 rounded flex items-center gap-1
+              ${isVisited 
+                ? 'bg-emerald-900/50 text-emerald-400 border-emerald-700' 
+                : isUnlocked
+                  ? 'bg-slate-800 text-slate-400 border-slate-600'
+                  : 'bg-slate-900 text-slate-600 border-slate-800'}`}
+            >
+              {isVisited ? <CheckCircle className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+              {isVisited ? 'VISITED' : 'LOCKED'}
+            </div>
           </div>
-          <span className="px-3 py-1 text-xs font-mono font-bold text-cyan-300 bg-cyan-950 rounded-full border border-cyan-800">
-            AR READY
-          </span>
+          <h3 className={`text-base font-bold transition-colors
+            ${isVisited ? 'text-emerald-300' : isUnlocked ? 'text-slate-200' : 'text-slate-500'}`}>
+            {station.title}
+          </h3>
         </div>
+        
+        <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''} ${isVisited ? 'text-emerald-500' : 'text-slate-600'}`} />
+      </button>
 
-        <h3 className="text-2xl font-bold text-white mb-2">AR 時光之窗</h3>
-        <p className="text-slate-300 mb-6 text-sm leading-relaxed">
-          偵測到孔子像周邊的時空裂縫。系統已準備好重疊歷史影像，點擊下方按鈕開啟視覺同步。
-        </p>
+      {/* Expandable Content */}
+      <AnimatePresence>
+        {(isOpen || isVisited) && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="px-4 pb-5 pt-0">
+              <div className={`h-px w-full mb-4 ${isVisited ? 'bg-emerald-500/20' : 'bg-slate-700'}`} />
+              
+              <p className="text-slate-400 mb-4 text-sm leading-relaxed">
+                {station.description}
+              </p>
 
-        <a 
-          href="https://history.lib.ntnu.edu.tw/wp/%E8%AA%A0%E6%BA%AA/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full group/btn"
-        >
-          <button className="w-full py-4 px-6 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg font-bold text-white shadow-lg flex items-center justify-center gap-3 transform transition-all hover:scale-[1.02] hover:shadow-cyan-500/25 border border-cyan-400/30">
-            <Smartphone className="w-5 h-5" />
-            開啟 AR 今昔對比 (圖書館系統)
-            <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
-          </button>
-        </a>
-      </div>
+              <a 
+                href={station.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleAction}
+                className={`block w-full transition-all duration-300 ${!isUnlocked ? 'pointer-events-none opacity-50' : ''}`}
+              >
+                <button className={`w-full py-3 px-4 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transform transition-all
+                  ${isVisited 
+                    ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-900/50' 
+                    : 'bg-cyan-600/10 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500 hover:text-slate-900 shadow-[0_0_10px_rgba(6,182,212,0.1)]'}`}
+                >
+                  {isVisited ? (
+                    <>
+                      <ExternalLink className="w-4 h-4" />
+                      再次檢視
+                    </>
+                  ) : (
+                    <>
+                      <Smartphone className="w-4 h-4" />
+                      開啟 AR 今昔對比
+                    </>
+                  )}
+                </button>
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
